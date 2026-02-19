@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Me Lembre Depois</title>
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+body{
+font-family:-apple-system;
+background:#f2f2f7;
+padding:20px;
+}
+input,button{
+padding:12px;
+margin:6px 0;
+width:100%;
+font-size:16px;
+}
+.card{
+background:white;
+padding:12px;
+border-radius:12px;
+margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<h2>Me Lembre Depois</h2>
+
+<input id="texto" placeholder="Digite algo...">
+<input type="datetime-local" id="data">
+
+<button onclick="adicionar()">Agendar</button>
+
+<div id="lista"></div>
+
+<script>
+
+let lembretes = JSON.parse(localStorage.getItem("lembretes")||"[]")
+
+function salvar(){
+localStorage.setItem("lembretes",JSON.stringify(lembretes))
+render()
+}
+
+function adicionar(){
+
+let texto = document.getElementById("texto").value
+let data = document.getElementById("data").value
+
+if(!texto || !data) return
+
+lembretes.push({texto,data})
+salvar()
+
+document.getElementById("texto").value=""
+}
+
+function render(){
+
+let div = document.getElementById("lista")
+div.innerHTML=""
+
+lembretes.sort((a,b)=> new Date(a.data)-new Date(b.data))
+
+lembretes.forEach(l=>{
+div.innerHTML+=`
+<div class="card">
+<b>${l.texto}</b><br>
+${new Date(l.data).toLocaleString()}
+</div>`
+})
+}
+
+render()
+
+if('serviceWorker' in navigator){
+navigator.serviceWorker.register('service-worker.js')
+}
+
+</script>
+
+</body>
+</html>
