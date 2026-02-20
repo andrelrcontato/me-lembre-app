@@ -11,7 +11,7 @@
 
 :root{
 --bg:#f2f2f7;
---card:#ffffff;
+--card:#fff;
 --text:#000;
 }
 
@@ -31,66 +31,66 @@ margin:0;
 padding:20px;
 }
 
-h2{margin-top:10px;}
-
-input{
-width:100%;
-padding:12px;
-margin-top:8px;
-border-radius:10px;
-border:1px solid #444;
+.card{
 background:var(--card);
-color:var(--text);
+border-radius:16px;
+padding:14px;
+margin-top:12px;
 }
 
 .fab{
 position:fixed;
 bottom:30px;
 right:20px;
-background:#007aff;
-color:white;
-border:none;
 width:60px;
 height:60px;
 border-radius:50%;
-font-size:28px;
-box-shadow:0 6px 14px rgba(0,0,0,0.2);
-}
-
-.card{
-background:var(--card);
-border-radius:16px;
-padding:14px;
-margin-top:12px;
-animation:fade .25s ease;
-}
-
-@keyframes fade{
-from{opacity:0; transform:translateY(8px);}
-to{opacity:1; transform:translateY(0);}
-}
-
-.data{color:#888;font-size:13px;margin-top:4px;}
-
-.apagar{
-margin-top:8px;
-background:#ff3b30;
-color:white;
-border:none;
-padding:8px;
-border-radius:10px;
-width:100%;
-}
-
-.editar{
-margin-top:8px;
 background:#007aff;
 color:white;
+font-size:28px;
 border:none;
-padding:8px;
-border-radius:10px;
-width:100%;
 }
+
+.modal-bg{
+position:fixed;
+top:0;
+left:0;
+right:0;
+bottom:0;
+background:rgba(0,0,0,.4);
+display:none;
+align-items:center;
+justify-content:center;
+}
+
+.modal{
+background:var(--card);
+padding:20px;
+border-radius:20px;
+width:90%;
+max-width:400px;
+}
+
+input{
+width:100%;
+padding:12px;
+margin-top:10px;
+border-radius:10px;
+border:1px solid #444;
+background:var(--card);
+color:var(--text);
+}
+
+button{
+margin-top:10px;
+padding:12px;
+width:100%;
+border:none;
+border-radius:12px;
+}
+
+.salvar{background:#007aff;color:white;}
+.cancelar{background:#ff3b30;color:white;}
 
 </style>
 </head>
@@ -99,73 +99,89 @@ width:100%;
 
 <h2>Me Lembre Depois</h2>
 
+<div id="lista"></div>
+
+<button class="fab" onclick="abrirModal()">+</button>
+
+<div class="modal-bg" id="modal">
+<div class="modal">
+
 <input id="texto" placeholder="Digite algo...">
 <input type="datetime-local" id="data">
 
-<div id="lista"></div>
+<button class="salvar" onclick="salvarLembrete()">Salvar</button>
+<button class="cancelar" onclick="fecharModal()">Cancelar</button>
 
-<button class="fab" onclick="adicionar()">+</button>
+</div>
+</div>
 
 <script>
 
 let lembretes = JSON.parse(localStorage.getItem("lembretes")||"[]")
-let editando = null
+let editando=null
 
-function salvar(){
+function salvarStorage(){
 localStorage.setItem("lembretes",JSON.stringify(lembretes))
 render()
 }
 
-function adicionar(){
+function abrirModal(){
+document.getElementById("modal").style.display="flex"
+}
 
-let texto = document.getElementById("texto").value
-let data = document.getElementById("data").value
+function fecharModal(){
+document.getElementById("modal").style.display="none"
+editando=null
+}
 
-if(!texto || !data) return
+function salvarLembrete(){
+
+let texto=document.getElementById("texto").value
+let data=document.getElementById("data").value
+
+if(!texto||!data)return
 
 if(editando){
-let l = lembretes.find(x=>x.id===editando)
-l.texto = texto
-l.data = data
-editando=null
+let l=lembretes.find(x=>x.id===editando)
+l.texto=texto
+l.data=data
 }else{
 lembretes.push({id:Date.now(),texto,data})
 }
 
-salvar()
-
 document.getElementById("texto").value=""
+fecharModal()
+salvarStorage()
 }
 
 function editar(id){
-let l = lembretes.find(x=>x.id===id)
-document.getElementById("texto").value = l.texto
-document.getElementById("data").value = l.data
+let l=lembretes.find(x=>x.id===id)
+document.getElementById("texto").value=l.texto
+document.getElementById("data").value=l.data
 editando=id
+abrirModal()
 }
 
 function apagar(id){
-lembretes = lembretes.filter(l=>l.id!==id)
-salvar()
+lembretes=lembretes.filter(l=>l.id!==id)
+salvarStorage()
 }
 
 function render(){
 
-let div = document.getElementById("lista")
+let div=document.getElementById("lista")
 div.innerHTML=""
 
-lembretes.sort((a,b)=> new Date(a.data)-new Date(b.data))
+lembretes.sort((a,b)=>new Date(a.data)-new Date(b.data))
 
 lembretes.forEach(l=>{
-
 div.innerHTML+=`
 <div class="card">
-<b>📅 ${l.texto}</b>
-<div class="data">${new Date(l.data).toLocaleString()}</div>
-<button class="editar" onclick="editar(${l.id})">Editar</button>
-<button class="apagar" onclick="apagar(${l.id})">Apagar</button>
-</div>
-`
+<b>📅 ${l.texto}</b><br>
+${new Date(l.data).toLocaleString()}
+<button onclick="editar(${l.id})">Editar</button>
+<button onclick="apagar(${l.id})">Apagar</button>
+</div>`
 })
 }
 
