@@ -16,9 +16,7 @@ margin:0;
 padding:20px;
 }
 
-h2{
-margin-top:10px;
-}
+h2{margin-top:10px;}
 
 button{
 background:#007aff;
@@ -44,20 +42,21 @@ background:white;
 border-radius:16px;
 padding:14px;
 margin-top:12px;
-box-shadow:0 2px 6px rgba(0,0,0,0.05);
+box-shadow:0 2px 8px rgba(0,0,0,0.06);
+animation:fade .25s ease;
 }
 
-.data{
-color:#666;
-font-size:13px;
-margin-top:4px;
+@keyframes fade{
+from{opacity:0; transform:translateY(8px);}
+to{opacity:1; transform:translateY(0);}
 }
 
-.faltam{
-color:#007aff;
-font-size:13px;
-margin-top:4px;
-}
+.data{color:#666;font-size:13px;margin-top:4px;}
+.faltam{font-size:13px;margin-top:4px;font-weight:500;}
+
+.proximo{border-left:6px solid #007aff;}
+.hoje{border-left:6px solid #34c759;}
+.passado{opacity:.5;}
 
 .apagar{
 margin-top:8px;
@@ -87,6 +86,19 @@ localStorage.setItem("lembretes",JSON.stringify(lembretes))
 render()
 }
 
+function vibrar(){
+if(navigator.vibrate){
+navigator.vibrate(40)
+}
+}
+
+function icone(texto){
+texto = texto.toLowerCase()
+if(texto.includes("anivers")) return "🎂"
+if(texto.includes("tarefa")) return "📄"
+return "📅"
+}
+
 function adicionar(){
 
 let texto = document.getElementById("texto").value
@@ -96,6 +108,7 @@ if(!texto || !data) return
 
 lembretes.push({id:Date.now(),texto,data})
 salvar()
+vibrar()
 
 document.getElementById("texto").value=""
 }
@@ -106,12 +119,12 @@ let hoje = new Date()
 let futuro = new Date(data)
 
 let diff = futuro-hoje
-
 let dias = Math.ceil(diff/(1000*60*60*24))
 
-if(dias<=0) return "Hoje"
-if(dias==1) return "Falta 1 dia"
-return "Faltam "+dias+" dias"
+if(dias<0) return {txt:"Já passou",classe:"passado"}
+if(dias===0) return {txt:"Hoje",classe:"hoje"}
+if(dias===1) return {txt:"Falta 1 dia",classe:"proximo"}
+return {txt:"Faltam "+dias+" dias",classe:"proximo"}
 }
 
 function apagar(id){
@@ -128,11 +141,13 @@ lembretes.sort((a,b)=> new Date(a.data)-new Date(b.data))
 
 lembretes.forEach(l=>{
 
+let info = diasRestantes(l.data)
+
 div.innerHTML+=`
-<div class="card">
-<b>${l.texto}</b>
+<div class="card ${info.classe}">
+<b>${icone(l.texto)} ${l.texto}</b>
 <div class="data">${new Date(l.data).toLocaleString()}</div>
-<div class="faltam">${diasRestantes(l.data)}</div>
+<div class="faltam">${info.txt}</div>
 <button class="apagar" onclick="apagar(${l.id})">Apagar</button>
 </div>
 `
