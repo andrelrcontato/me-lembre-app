@@ -9,40 +9,59 @@
 
 <style>
 
+:root{
+--bg:#f2f2f7;
+--card:#ffffff;
+--text:#000;
+}
+
+@media (prefers-color-scheme: dark){
+:root{
+--bg:#000;
+--card:#1c1c1e;
+--text:#fff;
+}
+}
+
 body{
 font-family:-apple-system;
-background:#f2f2f7;
+background:var(--bg);
+color:var(--text);
 margin:0;
 padding:20px;
 }
 
 h2{margin-top:10px;}
 
-button{
-background:#007aff;
-color:white;
-border:none;
-padding:14px;
-border-radius:14px;
-font-size:16px;
-width:100%;
-margin-top:10px;
-}
-
 input{
 width:100%;
 padding:12px;
 margin-top:8px;
 border-radius:10px;
-border:1px solid #ddd;
+border:1px solid #444;
+background:var(--card);
+color:var(--text);
+}
+
+.fab{
+position:fixed;
+bottom:30px;
+right:20px;
+background:#007aff;
+color:white;
+border:none;
+width:60px;
+height:60px;
+border-radius:50%;
+font-size:28px;
+box-shadow:0 6px 14px rgba(0,0,0,0.2);
 }
 
 .card{
-background:white;
+background:var(--card);
 border-radius:16px;
 padding:14px;
 margin-top:12px;
-box-shadow:0 2px 8px rgba(0,0,0,0.06);
 animation:fade .25s ease;
 }
 
@@ -51,16 +70,26 @@ from{opacity:0; transform:translateY(8px);}
 to{opacity:1; transform:translateY(0);}
 }
 
-.data{color:#666;font-size:13px;margin-top:4px;}
-.faltam{font-size:13px;margin-top:4px;font-weight:500;}
-
-.proximo{border-left:6px solid #007aff;}
-.hoje{border-left:6px solid #34c759;}
-.passado{opacity:.5;}
+.data{color:#888;font-size:13px;margin-top:4px;}
 
 .apagar{
 margin-top:8px;
 background:#ff3b30;
+color:white;
+border:none;
+padding:8px;
+border-radius:10px;
+width:100%;
+}
+
+.editar{
+margin-top:8px;
+background:#007aff;
+color:white;
+border:none;
+padding:8px;
+border-radius:10px;
+width:100%;
 }
 
 </style>
@@ -73,30 +102,18 @@ background:#ff3b30;
 <input id="texto" placeholder="Digite algo...">
 <input type="datetime-local" id="data">
 
-<button onclick="adicionar()">+ Novo Lembrete</button>
-
 <div id="lista"></div>
+
+<button class="fab" onclick="adicionar()">+</button>
 
 <script>
 
 let lembretes = JSON.parse(localStorage.getItem("lembretes")||"[]")
+let editando = null
 
 function salvar(){
 localStorage.setItem("lembretes",JSON.stringify(lembretes))
 render()
-}
-
-function vibrar(){
-if(navigator.vibrate){
-navigator.vibrate(40)
-}
-}
-
-function icone(texto){
-texto = texto.toLowerCase()
-if(texto.includes("anivers")) return "🎂"
-if(texto.includes("tarefa")) return "📄"
-return "📅"
 }
 
 function adicionar(){
@@ -106,25 +123,25 @@ let data = document.getElementById("data").value
 
 if(!texto || !data) return
 
+if(editando){
+let l = lembretes.find(x=>x.id===editando)
+l.texto = texto
+l.data = data
+editando=null
+}else{
 lembretes.push({id:Date.now(),texto,data})
+}
+
 salvar()
-vibrar()
 
 document.getElementById("texto").value=""
 }
 
-function diasRestantes(data){
-
-let hoje = new Date()
-let futuro = new Date(data)
-
-let diff = futuro-hoje
-let dias = Math.ceil(diff/(1000*60*60*24))
-
-if(dias<0) return {txt:"Já passou",classe:"passado"}
-if(dias===0) return {txt:"Hoje",classe:"hoje"}
-if(dias===1) return {txt:"Falta 1 dia",classe:"proximo"}
-return {txt:"Faltam "+dias+" dias",classe:"proximo"}
+function editar(id){
+let l = lembretes.find(x=>x.id===id)
+document.getElementById("texto").value = l.texto
+document.getElementById("data").value = l.data
+editando=id
 }
 
 function apagar(id){
@@ -141,13 +158,11 @@ lembretes.sort((a,b)=> new Date(a.data)-new Date(b.data))
 
 lembretes.forEach(l=>{
 
-let info = diasRestantes(l.data)
-
 div.innerHTML+=`
-<div class="card ${info.classe}">
-<b>${icone(l.texto)} ${l.texto}</b>
+<div class="card">
+<b>📅 ${l.texto}</b>
 <div class="data">${new Date(l.data).toLocaleString()}</div>
-<div class="faltam">${info.txt}</div>
+<button class="editar" onclick="editar(${l.id})">Editar</button>
 <button class="apagar" onclick="apagar(${l.id})">Apagar</button>
 </div>
 `
