@@ -36,7 +36,14 @@ background:var(--card);
 border-radius:16px;
 padding:14px;
 margin-top:12px;
+position:relative;
+transition:.2s;
+touch-action:pan-y;
 }
+
+.hoje{border-left:6px solid #34c759;}
+.proximo{border-left:6px solid #007aff;}
+.passado{opacity:.5;}
 
 .fab{
 position:fixed;
@@ -105,13 +112,10 @@ border-radius:12px;
 
 <div class="modal-bg" id="modal">
 <div class="modal">
-
 <input id="texto" placeholder="Digite algo...">
 <input type="datetime-local" id="data">
-
 <button class="salvar" onclick="salvarLembrete()">Salvar</button>
 <button class="cancelar" onclick="fecharModal()">Cancelar</button>
-
 </div>
 </div>
 
@@ -119,6 +123,22 @@ border-radius:12px;
 
 let lembretes = JSON.parse(localStorage.getItem("lembretes")||"[]")
 let editando=null
+
+function vibrar(){
+if(navigator.vibrate) navigator.vibrate(30)
+}
+
+function classeData(data){
+
+let hoje=new Date()
+let futuro=new Date(data)
+
+let diff=Math.ceil((futuro-hoje)/(1000*60*60*24))
+
+if(diff<0) return "passado"
+if(diff===0) return "hoje"
+return "proximo"
+}
 
 function salvarStorage(){
 localStorage.setItem("lembretes",JSON.stringify(lembretes))
@@ -149,6 +169,7 @@ l.data=data
 lembretes.push({id:Date.now(),texto,data})
 }
 
+vibrar()
 document.getElementById("texto").value=""
 fecharModal()
 salvarStorage()
@@ -164,7 +185,25 @@ abrirModal()
 
 function apagar(id){
 lembretes=lembretes.filter(l=>l.id!==id)
+vibrar()
 salvarStorage()
+}
+
+function swipe(card,id){
+
+let startX=0
+
+card.addEventListener("touchstart",e=>{
+startX=e.touches[0].clientX
+})
+
+card.addEventListener("touchmove",e=>{
+let dx=e.touches[0].clientX-startX
+if(dx<-60){
+card.style.transform="translateX(-100%)"
+setTimeout(()=>apagar(id),200)
+}
+})
 }
 
 function render(){
@@ -175,13 +214,20 @@ div.innerHTML=""
 lembretes.sort((a,b)=>new Date(a.data)-new Date(b.data))
 
 lembretes.forEach(l=>{
+
+let classe=classeData(l.data)
+
 div.innerHTML+=`
-<div class="card">
+<div class="card ${classe}" id="c${l.id}">
 <b>📅 ${l.texto}</b><br>
 ${new Date(l.data).toLocaleString()}
 <button onclick="editar(${l.id})">Editar</button>
-<button onclick="apagar(${l.id})">Apagar</button>
 </div>`
+})
+
+lembretes.forEach(l=>{
+let card=document.getElementById("c"+l.id)
+swipe(card,l.id)
 })
 }
 
